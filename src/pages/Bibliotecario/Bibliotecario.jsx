@@ -16,15 +16,15 @@ import {
   Info,
   LogOut,
   User,
-  Eye,
-  EyeOff,
   Trash2,
   CheckCircle,
   PlusCircle,
   Pencil,
   X,
   Save,
+  Search,
 } from "lucide-react";
+
 import "./Bibliotecario.css";
 
 const K_BOOKS = "leiasj_books_v1";
@@ -43,6 +43,13 @@ export default function Bibliotecario() {
   const [books, setBooks] = useState([]);
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState([]);
+  const [buscaLivro, setBuscaLivro] = useState(""); // texto da busca
+
+  // filtros da barra de pesquisa / catálogo
+  const [filtroLivro, setFiltroLivro] = useState("todos"); // disponibilidade
+  const [filtroGenero, setFiltroGenero] = useState("todos"); // gênero
+  const [filtroAutor, setFiltroAutor] = useState("todos"); // autor
+
   const [novoLivro, setNovoLivro] = useState({
     titulo: "",
     autor: "",
@@ -65,7 +72,6 @@ export default function Bibliotecario() {
   const [users, setUsers] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [novaSenha, setNovaSenha] = useState("");
-  const [showPassMap, setShowPassMap] = useState({});
   const [buscaUsuario, setBuscaUsuario] = useState("");
 
   // Empréstimos
@@ -189,6 +195,86 @@ export default function Bibliotecario() {
   async function buscarNaAPI(e) {
     e.preventDefault();
     if (!termo.trim()) return;
+
+    // 🗣️ Função para traduzir gêneros comuns
+    const traduzirGenero = (genero) => {
+      if (!genero) return "Gênero não definido";
+      const mapa = {
+        Fiction: "Ficção",
+        Science: "Ciência",
+        History: "História",
+        Biography: "Biografia",
+        Autobiography: "Autobiografia",
+        Art: "Arte",
+        Philosophy: "Filosofia",
+        Computers: "Computação",
+        Technology: "Tecnologia",
+        Education: "Educação",
+        Poetry: "Poesia",
+        Drama: "Drama",
+        Religion: "Religião",
+        Business: "Negócios",
+        "Comics & Graphic Novels": "Quadrinhos e Graphic Novels",
+        "Juvenile Fiction": "Ficção Juvenil",
+        "Juvenile Nonfiction": "Não Ficção Juvenil",
+        "Self-Help": "Autoajuda",
+        Psychology: "Psicologia",
+        "Health & Fitness": "Saúde e Boa Forma",
+        Medical: "Medicina",
+        Cooking: "Culinária",
+        Travel: "Viagem",
+        "Sports & Recreation": "Esportes e Recreação",
+        Nature: "Natureza",
+        Animals: "Animais",
+        "Social Science": "Ciências Sociais",
+        "Political Science": "Ciência Política",
+        Law: "Direito",
+        Music: "Música",
+        Photography: "Fotografia",
+        Architecture: "Arquitetura",
+        Design: "Design",
+        "Performing Arts": "Artes Cênicas",
+        "Foreign Language Study": "Estudo de Línguas Estrangeiras",
+        "Language Arts & Disciplines": "Linguística e Comunicação",
+        Mathematics: "Matemática",
+        "Science Fiction": "Ficção Científica",
+        Fantasy: "Fantasia",
+        Horror: "Terror",
+        Mystery: "Mistério",
+        Thriller: "Suspense",
+        Romance: "Romance",
+        Adventure: "Aventura",
+        Humor: "Humor",
+        "True Crime": "Crime Real",
+        "Family & Relationships": "Família e Relacionamentos",
+        Gardening: "Jardinagem",
+        "Crafts & Hobbies": "Artesanato e Passatempos",
+        "House & Home": "Casa e Lar",
+        Transportation: "Transporte",
+        Reference: "Referência",
+        "Study Aids": "Guias de Estudo",
+        "Body, Mind & Spirit": "Corpo, Mente e Espírito",
+        "Antiques & Collectibles": "Antiguidades e Colecionáveis",
+        "Literary Criticism": "Crítica Literária",
+        "Games & Activities": "Jogos e Atividades",
+        "Foreign Language": "Idioma Estrangeiro",
+        Political: "Político",
+        Cultural: "Cultural",
+        Erotica: "Erótico",
+        War: "Guerra",
+        Western: "Faroeste",
+        Mythology: "Mitologia",
+        Folklore: "Folclore",
+        Essays: "Ensaios",
+        Satire: "Sátira",
+        "Short Stories": "Contos",
+        Epic: "Épico",
+        Memoir: "Memórias",
+      };
+
+      return mapa[genero] || genero;
+    };
+
     try {
       const res = await fetch(
         `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
@@ -201,7 +287,7 @@ export default function Bibliotecario() {
           id: item.id,
           titulo: item.volumeInfo.title || "Sem título",
           autor: item.volumeInfo.authors?.join(", ") || "Autor desconhecido",
-          genero: item.volumeInfo.categories?.[0] || "Gênero não definido",
+          genero: traduzirGenero(item.volumeInfo.categories?.[0]),
           capa:
             item.volumeInfo.imageLinks?.thumbnail ||
             item.volumeInfo.imageLinks?.smallThumbnail ||
@@ -302,7 +388,6 @@ export default function Bibliotecario() {
   };
 
   const aprovarEmprestimo = (eid) => {
-    // atualiza empréstimo
     const nextLoans = emprestimos.map((x) =>
       x.id === eid
         ? {
@@ -316,7 +401,6 @@ export default function Bibliotecario() {
     setEmprestimos(nextLoans);
     localStorage.setItem(K_LOANS, JSON.stringify(nextLoans));
 
-    // baixa estoque do livro
     const emp = emprestimos.find((x) => x.id === eid);
     if (emp?.livro?.id) {
       const updatedBooks = books.map((b) =>
@@ -332,14 +416,12 @@ export default function Bibliotecario() {
   };
 
   const marcarDevolvido = (eid) => {
-    // atualiza empréstimo
     const nextLoans = emprestimos.map((x) =>
       x.id === eid ? { ...x, status: "Devolvido", devolvido: true } : x
     );
     setEmprestimos(nextLoans);
     localStorage.setItem(K_LOANS, JSON.stringify(nextLoans));
 
-    // repõe estoque
     const emp = emprestimos.find((x) => x.id === eid);
     if (emp?.livro?.id) {
       const updatedBooks = books.map((b) =>
@@ -355,9 +437,6 @@ export default function Bibliotecario() {
   };
 
   // ===== Usuários =====
-  const toggleShowPass = (id) =>
-    setShowPassMap((m) => ({ ...m, [id]: !m[id] }));
-
   const startEdit = (u) => {
     setEditingId(u.id);
     setNovaSenha("");
@@ -390,6 +469,33 @@ export default function Bibliotecario() {
   const alunos = filtrados.filter((u) => u.tipo === "aluno");
   const funcionarios = filtrados.filter((u) => u.tipo === "funcionario");
   const bibliotecarios = filtrados.filter((u) => u.tipo === "bibliotecario");
+
+  // listas para selects de gênero/autor
+  const generosDisponiveis = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          books
+            .map((b) => (b.genero || "").trim())
+            .filter((g) => g && g !== "Gênero não definido")
+        )
+      ).sort(),
+    [books]
+  );
+
+  const autoresDisponiveis = useMemo(
+    () =>
+      Array.from(
+        new Set(books.map((b) => (b.autor || "").trim()).filter((a) => a))
+      ).sort(),
+    [books]
+  );
+
+  const livrosFiltrados = books.filter(
+    (b) =>
+      b.titulo.toLowerCase().includes(buscaLivro.toLowerCase()) ||
+      b.autor.toLowerCase().includes(buscaLivro.toLowerCase())
+  );
 
   return (
     <div className="bib-page">
@@ -513,7 +619,6 @@ export default function Bibliotecario() {
                   }
                 />
 
-                {/* Área para colar imagem como capa */}
                 <div
                   className="upload-area"
                   onPaste={(e) => {
@@ -575,141 +680,215 @@ export default function Bibliotecario() {
             </div>
 
             {/* Catálogo atual */}
+            {/* 🔍 Barra de pesquisa */}
+            <div className="search-wrapper">
+              <div className="search-box">
+                <Search size={18} color="#3771c8" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar por título ou autor..."
+                  value={buscaLivro}
+                  onChange={(e) => setBuscaLivro(e.target.value)}
+                />
+              </div>
+
+              <select
+                className="filter-select"
+                value={filtroLivro}
+                onChange={(e) => setFiltroLivro(e.target.value)}
+              >
+                <option value="todos">Todos</option>
+                <option value="disponiveis">Disponíveis</option>
+                <option value="indisponiveis">Indisponíveis</option>
+              </select>
+
+              <select
+                className="filter-select"
+                value={filtroGenero}
+                onChange={(e) => setFiltroGenero(e.target.value)}
+              >
+                <option value="todos">Todos os gêneros</option>
+                {generosDisponiveis.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="filter-select"
+                value={filtroAutor}
+                onChange={(e) => setFiltroAutor(e.target.value)}
+              >
+                <option value="todos">Todos os autores</option>
+                {autoresDisponiveis.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <h4 className="sec-title">Catálogo atual</h4>
             <div className="livros-grid">
-              {books.length === 0 ? (
-                <p className="vazio">Nenhum livro no catálogo.</p>
+              {livrosFiltrados.length === 0 ? (
+                <p className="vazio">Nenhum livro encontrado.</p>
               ) : (
-                books.map((b) => (
-                  <div key={b.id} className="livro-card">
-                    <img
-                      src={b.capa || "https://via.placeholder.com/120x160"}
-                      alt={b.titulo}
-                    />
-                    {editId === b.id ? (
-                      <>
-                        <input
-                          type="text"
-                          value={editBook.titulo}
-                          onChange={(e) =>
-                            setEditBook((p) => ({
-                              ...p,
-                              titulo: e.target.value,
-                            }))
-                          }
-                          placeholder="Título"
-                        />
-                        <input
-                          type="text"
-                          value={editBook.autor}
-                          onChange={(e) =>
-                            setEditBook((p) => ({
-                              ...p,
-                              autor: e.target.value,
-                            }))
-                          }
-                          placeholder="Autor"
-                        />
-                        <input
-                          type="text"
-                          value={editBook.genero}
-                          onChange={(e) =>
-                            setEditBook((p) => ({
-                              ...p,
-                              genero: e.target.value,
-                            }))
-                          }
-                          placeholder="Gênero"
-                        />
-                        <input
-                          type="number"
-                          min="0"
-                          value={editBook.quantidade}
-                          onChange={(e) =>
-                            setEditBook((p) => ({
-                              ...p,
-                              quantidade: e.target.value,
-                            }))
-                          }
-                          placeholder="Quantidade"
-                        />
-                        <div
-                          className="upload-area mini"
-                          title="Cole uma nova capa (Ctrl+V)"
-                          onPaste={(e) => {
-                            const items = Array.from(
-                              e.clipboardData?.items || []
-                            );
-                            const img = items.find((i) =>
-                              i.type?.startsWith("image/")
-                            );
-                            if (!img) return alert("Cole uma imagem válida.");
-                            const file = img.getAsFile();
-                            const reader = new FileReader();
-                            reader.onload = (ev) =>
+                livrosFiltrados
+                  .filter((b) => {
+                    if (filtroLivro === "disponiveis") {
+                      return Number(b.quantidade) > 0;
+                    }
+                    if (filtroLivro === "indisponiveis") {
+                      return Number(b.quantidade) === 0;
+                    }
+                    return true;
+                  })
+                  .filter((b) => {
+                    if (filtroGenero === "todos") return true;
+                    const genero = (b.genero || "").toLowerCase();
+                    return genero.includes(filtroGenero.toLowerCase());
+                  })
+                  .filter((b) => {
+                    if (filtroAutor === "todos") return true;
+                    const autor = (b.autor || "").toLowerCase();
+                    return autor.includes(filtroAutor.toLowerCase());
+                  })
+                  .map((b) => (
+                    <div key={b.id} className="livro-card">
+                      <img
+                        src={b.capa || "https://via.placeholder.com/120x160"}
+                        alt={b.titulo}
+                      />
+                      {editId === b.id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editBook.titulo}
+                            onChange={(e) =>
                               setEditBook((p) => ({
                                 ...p,
-                                capa: ev.target.result,
-                              }));
-                            reader.readAsDataURL(file);
-                          }}
-                        >
-                          {editBook.capa ? (
-                            <img
-                              src={editBook.capa}
-                              alt="Capa"
-                              className="preview-capa"
-                            />
-                          ) : (
-                            <p>Cole a nova capa aqui</p>
-                          )}
-                        </div>
-                        <div className="row-btns">
-                          <button className="btn-verde" onClick={saveEditBook}>
-                            <Save size={14} /> Salvar
-                          </button>
-                          <button
-                            className="btn-vermelho"
-                            onClick={cancelEditBook}
-                          >
-                            <X size={14} /> Cancelar
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h5 title={b.titulo}>{b.titulo}</h5>
-                        <p className="autor">{b.autor}</p>
-                        <p className="genero">{b.genero}</p>
-                        <p className="qtd">
-                          Qtd:{" "}
-                          <strong
-                            style={{
-                              color:
-                                Number(b.quantidade) === 0 ? "red" : "#0c1a35",
+                                titulo: e.target.value,
+                              }))
+                            }
+                            placeholder="Título"
+                          />
+                          <input
+                            type="text"
+                            value={editBook.autor}
+                            onChange={(e) =>
+                              setEditBook((p) => ({
+                                ...p,
+                                autor: e.target.value,
+                              }))
+                            }
+                            placeholder="Autor"
+                          />
+                          <input
+                            type="text"
+                            value={editBook.genero}
+                            onChange={(e) =>
+                              setEditBook((p) => ({
+                                ...p,
+                                genero: e.target.value,
+                              }))
+                            }
+                            placeholder="Gênero"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            value={editBook.quantidade}
+                            onChange={(e) =>
+                              setEditBook((p) => ({
+                                ...p,
+                                quantidade: e.target.value,
+                              }))
+                            }
+                            placeholder="Quantidade"
+                          />
+                          <div
+                            className="upload-area mini"
+                            title="Cole uma nova capa (Ctrl+V)"
+                            onPaste={(e) => {
+                              const items = Array.from(
+                                e.clipboardData?.items || []
+                              );
+                              const img = items.find((i) =>
+                                i.type?.startsWith("image/")
+                              );
+                              if (!img) return alert("Cole uma imagem válida.");
+                              const file = img.getAsFile();
+                              const reader = new FileReader();
+                              reader.onload = (ev) =>
+                                setEditBook((p) => ({
+                                  ...p,
+                                  capa: ev.target.result,
+                                }));
+                              reader.readAsDataURL(file);
                             }}
                           >
-                            {b.quantidade}
-                          </strong>
-                        </p>
-                        <div className="row-btns">
-                          <button
-                            className="btn-azul"
-                            onClick={() => startEditBook(b)}
-                          >
-                            <Pencil size={14} /> Editar
-                          </button>
-                          <button
-                            className="btn-vermelho"
-                            onClick={() => excluirLivro(b.id)}
-                          >
-                            <Trash2 size={14} /> Excluir
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))
+                            {editBook.capa ? (
+                              <img
+                                src={editBook.capa}
+                                alt="Capa"
+                                className="preview-capa"
+                              />
+                            ) : (
+                              <p>Cole a nova capa aqui</p>
+                            )}
+                          </div>
+                          <div className="row-btns">
+                            <button
+                              className="btn-verde"
+                              onClick={saveEditBook}
+                            >
+                              <Save size={14} /> Salvar
+                            </button>
+                            <button
+                              className="btn-vermelho"
+                              onClick={cancelEditBook}
+                            >
+                              <X size={14} /> Cancelar
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <h5 title={b.titulo}>{b.titulo}</h5>
+                          <p className="autor">{b.autor}</p>
+                          <p className="genero">{b.genero}</p>
+                          <p className="qtd">
+                            Qtd:{" "}
+                            <strong
+                              style={{
+                                color:
+                                  Number(b.quantidade) === 0
+                                    ? "red"
+                                    : "#0c1a35",
+                              }}
+                            >
+                              {b.quantidade}
+                            </strong>
+                          </p>
+                          <div className="row-btns">
+                            <button
+                              className="btn-azul"
+                              onClick={() => startEditBook(b)}
+                            >
+                              <Pencil size={14} /> Editar
+                            </button>
+                            <button
+                              className="btn-vermelho"
+                              onClick={() => excluirLivro(b.id)}
+                            >
+                              <Trash2 size={14} /> Excluir
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))
               )}
             </div>
           </div>
@@ -746,8 +925,6 @@ export default function Bibliotecario() {
                   <td>{u.turma || "-"}</td>
                   <SenhaCell
                     u={u}
-                    showPassMap={showPassMap}
-                    toggleShowPass={toggleShowPass}
                     editingId={editingId}
                     novaSenha={novaSenha}
                     setNovaSenha={setNovaSenha}
@@ -780,8 +957,6 @@ export default function Bibliotecario() {
                   <td>{u.turno || "-"}</td>
                   <SenhaCell
                     u={u}
-                    showPassMap={showPassMap}
-                    toggleShowPass={toggleShowPass}
                     editingId={editingId}
                     novaSenha={novaSenha}
                     setNovaSenha={setNovaSenha}
@@ -813,8 +988,6 @@ export default function Bibliotecario() {
                   <td>{u.turno || "-"}</td>
                   <SenhaCell
                     u={u}
-                    showPassMap={showPassMap}
-                    toggleShowPass={toggleShowPass}
                     editingId={editingId}
                     novaSenha={novaSenha}
                     setNovaSenha={setNovaSenha}
@@ -952,8 +1125,6 @@ function UserTable({ titulo, columns, data, renderRow, vazio }) {
 
 function SenhaCell({
   u,
-  showPassMap,
-  toggleShowPass,
   editingId,
   novaSenha,
   setNovaSenha,
@@ -964,14 +1135,11 @@ function SenhaCell({
     <td>
       <div className="senha-box">
         <input
-          type={showPassMap[u.id] ? "text" : "password"}
+          type="password"
           readOnly
           value={u.senha || ""}
           aria-label={`Senha de ${u.nome}`}
         />
-        <button className="btn-mini" onClick={() => toggleShowPass(u.id)}>
-          {showPassMap[u.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
       </div>
       <div className="senha-actions">
         {editingId === u.id ? (
