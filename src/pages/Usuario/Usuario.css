@@ -8,19 +8,24 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* ======= CABEÇALHO ======= */
+/* ======= CABEÇALHO (APENAS A PARTE AZUL) ======= */
 .usuario-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
   background: #3771c8;
   color: white;
-  padding: 14px 24px;
+  padding: 18px 24px;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  margin-bottom: 16px;
 }
 
+.usuario-header h2 {
+  margin: 0;
+}
+
+/* ======= USUÁRIO À DIREITA ======= */
 .usuario-info {
   display: flex;
   align-items: center;
@@ -53,79 +58,83 @@
   transform: scale(1.05);
 }
 
-/* ======= LIVROS ======= */
-.livros-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px;
-}
-
-.livro-card {
-  background: #ffffffcc; /* leve transparência */
+/* ======= CAIXA ABAIXO DO HEADER (FILTROS) ======= */
+.filtros-section {
+  background: #ffffffcc;
   backdrop-filter: blur(6px);
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: 0.3s ease;
+  padding: 14px 24px;
+  border-radius: 16px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  margin: 0 auto 26px auto;
+  max-width: 1100px;
+  display: flex;
+  justify-content: center; /* centraliza o conteúdo dentro da caixa */
 }
 
-.livro-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+/* ======= LINHA DE BUSCA + FILTROS ======= */
+.search-wrapper {
+  display: flex;
+  align-items: center; /* 🔥 tudo na MESMA altura */
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
 }
 
-.livro-card img {
-  width: 100px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.livro-card h4 {
-  font-size: 15px;
-  margin: 8px 0 4px;
-  font-weight: 600;
-  color: #0c1a35;
-}
-
-.livro-card .autor {
-  color: #4a5568;
-  font-size: 13px;
-}
-
-.badge-indisponivel {
-  background: #ffe9a6;
-  color: #6b4e00;
+/* SEARCH */
+.search-box {
+  display: flex;
+  align-items: center; /* ícone + input alinhados */
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #cfd7e6;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  display: inline-block;
-  margin-top: 6px;
-}
-
-/* ======= BOTÕES ======= */
-.livro-card button {
-  background-color: #ffdd55;
-  color: #0c1a35;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
+  padding: 0 14px;
+  width: 100%;
+  max-width: 420px;
+  height: 42px; /* mesma altura dos selects */
   transition: 0.25s ease;
 }
 
-.livro-card button:hover {
-  background-color: #ffe97a;
-  transform: scale(1.05);
+.search-box input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  color: #0c1a35;
+  background: transparent;
+  padding: 0;
 }
 
-.livro-card button:disabled {
-  background-color: #e6e6e6;
-  color: #8a8a8a;
-  cursor: not-allowed;
+.search-box:focus-within {
+  border-color: #3771c8;
+  box-shadow: 0 0 0 3px rgba(55, 113, 200, 0.15);
+}
+
+/* SELECTS */
+.filter-select {
+  border: 1px solid #cfd7e6;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-size: 14px;
+  background: #ffffff;
+  color: #0c1a35;
+  cursor: pointer;
+  transition: 0.25s ease;
+  height: 42px; /* mesma altura da busca */
+  min-width: 170px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%233771c8' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+}
+
+.filter-select:focus {
+  border-color: #3771c8;
+  box-shadow: 0 0 0 3px rgba(55, 113, 200, 0.15);
+  outline: none;
 }
 
 /* ======= NOTIFICAÇÕES ======= */
@@ -237,14 +246,118 @@
   gap: 6px;
 }
 
+/* ======= GRID DE LIVROS ======= */
+.livros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.livro-card {
+  background: #ffffffcc;
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: 0.3s ease;
+}
+
+.livro-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.livro-card img {
+  width: 100px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.livro-card h4 {
+  font-size: 15px;
+  margin: 8px 0 4px;
+  font-weight: 600;
+  color: #0c1a35;
+}
+
+.livro-card .autor {
+  color: #4a5568;
+  font-size: 13px;
+}
+
+.badge-indisponivel {
+  background: #ffe9a6;
+  color: #6b4e00;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  margin-top: 6px;
+}
+
+.livro-card button {
+  background-color: #ffdd55;
+  color: #0c1a35;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.livro-card button:hover {
+  background-color: #ffe97a;
+  transform: scale(1.05);
+}
+
+.livro-card button:disabled {
+  background-color: #e6e6e6;
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
+
+/* mensagem quando não há livros (caso use) */
+.texto-vazio {
+  text-align: center;
+  margin-top: 40px;
+  color: #555;
+  font-style: italic;
+}
+
 /* ======= RESPONSIVO ======= */
+@media (max-width: 900px) {
+  .search-wrapper {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .usuario-header {
     flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
-    text-align: center;
   }
-  .livros-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+
+  .filtros-section {
+    padding: 12px 16px;
+  }
+
+  .search-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-select,
+  .search-box {
+    max-width: 100%;
   }
 }
